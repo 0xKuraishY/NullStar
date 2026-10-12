@@ -1,0 +1,104 @@
+{% extends "page.html" %}
+{% block content %}
+<div class="gutter">
+
+{% if new_invite %}
+<div class="alert alert-ok" style="flex-direction:column;align-items:stretch">
+  <strong>Invite created: copy the link now, the code is never shown again.</strong>
+  <div class="secret" style="margin-top:8px">{{ new_invite_link }}</div>
+  <div class="row-h" style="margin-top:8px">
+    <button class="btn btn-sm" data-copy="{{ new_invite_link }}">copy link</button>
+    <button class="btn btn-sm btn-ghost" data-copy="{{ new_invite }}">copy code only</button>
+  </div>
+</div>
+{% endif %}
+
+<div class="grid" style="grid-template-columns:minmax(0,1fr) 330px">
+  <div class="panel">
+    <div class="panel-head"><h2>Invites</h2></div>
+    <div class="panel-body" style="padding:0">
+      <table class="data">
+        <thead><tr><th>Code</th><th>Role</th><th>Note</th><th>Status</th><th>Expires</th><th></th></tr></thead>
+        <tbody>
+        {% for inv in invites %}
+        {% set expired = inv.expires_at and inv.expires_at.replace(tzinfo=None) < now.replace(tzinfo=None) %}
+        <tr>
+          <td class="mono faint">...{{ inv.hint }}</td>
+          <td><span class="badge">{{ inv.role }}</span></td>
+          <td class="faint">{{ inv.note or '-' }}</td>
+          <td>
+            {% if inv.used_at %}<span class="badge" style="color:var(--accent)">used</span>
+            {% elif inv.revoked %}<span class="badge" style="color:var(--critical)">revoked</span>
+            {% elif expired %}<span class="badge" style="color:var(--high)">expired</span>
+            {% else %}<span class="badge" style="color:var(--medium)">pending</span>{% endif %}
+          </td>
+          <td class="faint">{{ inv.expires_at|ago }}</td>
+          <td class="actions">
+            {% if not inv.used_at and not inv.revoked %}
+            <form method="post" action="/admin/invites/{{ inv.id }}/revoke">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="btn btn-sm btn-danger" type="submit">Revoke</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="faint" style="text-align:center;padding:24px">No invites yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="panel">
+      <div class="panel-head"><h2>New invite</h2></div>
+      <div class="panel-body">
+        <form method="post" action="/admin/invites">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="field">
+            <label for="role">Role granted</label>
+            <select id="role" name="role">
+              {% for r in roles %}<option value="{{ r }}" {{ 'selected' if r == 'viewer' }}>{{ r }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label for="note">Note</label>
+            <input id="note" name="note" placeholder="who is this for?">
+          </div>
+          <div class="field">
+            <label for="ttl_hours">Valid for (hours)</label>
+            <input id="ttl_hours" name="ttl_hours" type="number" min="1" max="8760" value="168">
+          </div>
+          <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">
+            Generate invite link</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Registration policy</h2></div>
+      <div class="panel-body">
+        <form method="post" action="/admin/invites/policy">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <label class="row-h" style="gap:8px;margin-bottom:12px;cursor:pointer">
+            <input type="checkbox" name="allow_open_registration" value="1"
+                   {{ 'checked' if auth_cfg.allow_open_registration }} style="width:auto">
+            <span style="font-size:13px">Allow anyone to self-register</span>
+          </label>
+          <div class="field">
+            <label for="default_role">Default role for self-registration</label>
+            <select id="default_role" name="default_role">
+              {% for r in roles %}<option value="{{ r }}" {{ 'selected' if auth_cfg.default_role == r }}>{{ r }}</option>{% endfor %}
+            </select>
+          </div>
+          <button class="btn" type="submit">Save policy</button>
+        </form>
+        <p class="faint" style="font-size:12px;margin-bottom:0;margin-top:12px">
+          Off by default. With it off, <code class="mono">/register</code> only accepts a valid invite code.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{# `t` is passed in rather than read from context: this macro is also
+   rendered outside a request, by the live stream. #}
+{% macro entry(repo, state, csrf_token, back, user, t) %}
+{%- set sig = repo.signals or [] -%}
+{%- set b = band(repo.score) -%}
+<article class="entry m-{{ b }}" data-repo="{{ repo.id }}">
+
+  <div class="entry-mark">
+    <span class="num">{{ repo.score|round|int }}</span>
+    <span class="measure"><i style="width:{{ repo.score|round|int }}%"></i></span>
+    <span class="cap">{{ t(band_label(repo.score)) }}</span>
+  </div>
+
+  <div>
+    <h2 class="entry-head">
+      <a href="/repo/{{ repo.id }}">{{ repo.name }}</a>
+      <span class="by">{{ t("by") }} {{ repo.owner }}</span>
+    </h2>
+
+    <p class="entry-line">
+      <span>{{ repo.discovered_at|ago }}</span>
+      <span class="sep">/</span>
+      <span>{{ t(tier_labels.get(repo.owner_tier, repo.owner_tier)) }}</span>
+      {% if repo.language %}<span class="sep">/</span><span>{{ repo.language }}</span>{% endif %}
+      <span class="sep">/</span>
+      <span class="fig">{{ repo.stars|compact }} {{ t('star') if repo.stars == 1 else t('stars') }}</span>
+      {% if repo.star_velocity and repo.star_velocity > 0.5 %}
+      <span class="sep">/</span><span class="fig">{{ '%.1f'|format(repo.star_velocity) }} {{ t('a day') }}</span>
+      {% endif %}
+    </p>
+
+    {% if repo.description %}
+    <p class="entry-lede">{{ repo.description|plain }}</p>
+    {% else %}
+    <p class="entry-lede bare">{{ t("The author left no description.") }}</p>
+    {% endif %}
+
+    <p class="entry-note">
+      {%- for slug in (repo.categories or [])[:3] -%}
+        {%- if not loop.first %}<span class="sep">/</span>{% endif -%}
+        <span class="dom">{{ t(category_label(slug)) }}</span>
+      {%- endfor -%}
+      {%- if 'hidden-gem' in sig %}<span class="sep">/</span><span class="cry cry-gem">{{ t("overlooked") }}</span>{% endif -%}
+      {%- if 'major-publisher' in sig %}<span class="sep">/</span><span class="cry cry-major">{{ t("major publisher") }}</span>{% endif -%}
+      {%- if 'new-account' in sig %}<span class="sep">/</span><span class="cry cry-acct">{{ t("new account") }}</span>{% endif -%}
+      {%- if 'just-created' in sig %}<span class="sep">/</span><span class="cry cry-today">{{ t("created today") }}</span>{% endif -%}
+      {%- if 'trending' in sig %}<span class="sep">/</span><span class="cry cry-trend">{{ t("rising fast") }}</span>{% endif -%}
+    </p>
+  </div>
+
+  <div class="entry-do">
+    <a href="{{ repo.html_url }}" target="_blank" rel="noopener noreferrer"
+       title="{{ t('Open on GitHub') }}" aria-label="{{ t('Open on GitHub') }}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M14 4h6v6M20 4l-8.5 8.5" fill="none" stroke="currentColor"
+              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 14.5V19a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 19V8a1.5 1.5 0 0 1 1.5-1.5H10"
+              fill="none" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </a>
+
+    {% if not user %}
+    <a href="/login?next=/repo/{{ repo.id }}"
+       title="{{ t('Sign in to save this') }}" aria-label="{{ t('Sign in to save this') }}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1z"
+              fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+    </a>
+    {% else %}
+    <form method="post" action="/repo/{{ repo.id }}/bookmark">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="back" value="{{ back }}">
+      {% set is_saved = state and state.bookmarked %}
+      <button type="submit" class="{{ 'on' if is_saved }}"
+              title="{{ t('Remove from saved') if is_saved else t('Save for later') }}"
+              aria-label="{{ t('Remove from saved') if is_saved else t('Save for later') }}"
+              aria-pressed="{{ 'true' if is_saved else 'false' }}">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1z"
+                fill="{{ 'currentColor' if is_saved else 'none' }}"
+                stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </form>
+
+    <form method="post" action="/repo/{{ repo.id }}/dismiss">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="back" value="{{ back }}">
+      <button type="submit" title="{{ t('Hide from my feed') }}"
+              aria-label="{{ t('Hide from my feed') }}">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 4l16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round"/>
+          <path d="M9.6 5.3A8.9 8.9 0 0 1 12 5c5 0 9 4.6 9 7 0 .9-.7 2.2-1.9 3.4M6.5 7.1C4.3 8.6 3 10.8 3 12c0 2.4 4 7 9 7 1.3 0 2.5-.3 3.6-.8"
+                fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M10.4 10.5a2.2 2.2 0 0 0 3.1 3.1" fill="none" stroke="currentColor"
+                stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</article>
+{% endmacro %}

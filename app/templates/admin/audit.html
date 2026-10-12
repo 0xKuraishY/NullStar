@@ -1,0 +1,35 @@
+{% extends "page.html" %}
+{% block content %}
+<div class="gutter">
+<form class="filters" method="get" data-autosubmit>
+  <select name="action">
+    <option value="">All actions</option>
+    {% for a in actions %}<option value="{{ a }}" {{ 'selected' if selected == a }}>{{ a }}</option>{% endfor %}
+  </select>
+  <span class="muted">{{ entries|length }} most recent entries</span>
+</form>
+
+<div class="panel">
+  <div class="panel-body" style="padding:0">
+    <table class="data">
+      <thead><tr><th>When</th><th>Action</th><th>Actor</th><th>Target</th><th>Source IP</th><th>Detail</th></tr></thead>
+      <tbody>
+      {% for e in entries %}
+      <tr>
+        <td class="faint nowrap">{{ e.created_at|ago }}</td>
+        <td><span class="badge mono" style="font-size:10.5px">{{ e.action }}</span></td>
+        <td>{{ e.actor }}</td>
+        <td class="faint mono" style="font-size:11.5px">{{ e.target or '-' }}</td>
+        <td class="faint mono" style="font-size:11.5px">{{ e.ip or '-' }}</td>
+        <td class="faint mono" style="font-size:11px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          {{ e.meta if e.meta else '' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="faint" style="text-align:center;padding:24px">Nothing logged yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+{% endblock %}

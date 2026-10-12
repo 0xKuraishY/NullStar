@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% from "_entry.html" import entry %}
+{% block content %}
+
+{% if preset %}
+{% set heads = {
+  "overlooked": ["Overlooked",
+    "Security projects scoring well on substance that almost nobody has seen: recently created, five stars or fewer."],
+  "majors":     ["Major publishers",
+    "Recent releases from large technology companies, security vendors, research labs and national CERTs."],
+  "newcomers":  ["New accounts",
+    "Security code from GitHub accounts opened in the last four months. Uneven by nature, occasionally excellent."],
+  "saved":      ["Saved",
+    "Everything you set aside to come back to."]
+} %}
+<div class="leaf-head">
+  <h1>{{ t(heads[preset][0]) }}</h1>
+  <p class="sub">{{ t(heads[preset][1]) }}</p>
+</div>
+{% endif %}
+
+<form class="sift" method="get" data-autosubmit>
+  <input type="hidden" name="page" value="1">
+  {% if filters.q %}<input type="hidden" name="q" value="{{ filters.q }}">{% endif %}
+  {% if filters.bookmarked %}<input type="hidden" name="bookmarked" value="1">{% endif %}
+
+  <span class="pair"><label>{{ t("order") }}</label>
+    <select name="sort">{% for key, label in facets.sorts %}
+      <option value="{{ key }}" {{ 'selected' if filters.sort == key }}>{{ t(label) }}</option>{% endfor %}
+    </select></span>
+
+  <span class="pair"><label>{{ t("since") }}</label>
+    <select name="window">{% for w in facets.windows %}
+      <option value="{{ w }}" {{ 'selected' if filters.window == w }}>
+        {{ t('the beginning') if w == 'all' else t(w) }}</option>{% endfor %}
+    </select></span>
+
+  <span class="pair"><label>{{ t("craft") }}</label>
+    <select name="category"><option value="">{{ t("any") }}</option>{% for slug, label, accent in facets.categories %}
+      <option value="{{ slug }}" {{ 'selected' if filters.category == slug }}>{{ t(label) }}</option>{% endfor %}
+    </select></span>
+
+  <span class="pair"><label>{{ t("from") }}</label>
+    <select name="tier"><option value="">{{ t("anyone") }}</option>{% for slug, label in facets.tiers %}
+      <option value="{{ slug }}" {{ 'selected' if filters.tier == slug }}>{{ t(label) }}</option>{% endfor %}
+    </select></span>
+
+  <span class="pair"><label>{{ t("trait") }}</label>
+    <select name="signal"><option value="">{{ t("any") }}</option>{% for slug, label in facets.signals %}
+      <option value="{{ slug }}" {{ 'selected' if filters.signal == slug }}>{{ t(label) }}</option>{% endfor %}
+    </select></span>
+
+  <span class="pair"><label>{{ t("built in") }}</label>
+    <select name="language"><option value="">{{ t("any") }}</option>{% for lang in facets.languages %}
+      <option value="{{ lang }}" {{ 'selected' if filters.language == lang }}>{{ lang }}</option>{% endfor %}
+    </select></span>
+
+  <span class="pair"><label>{{ t("at least") }}</label>
+    <select name="min_score"><option value="0">{{ t("any score") }}</option>{% for v in [30, 45, 60, 70, 80, 90] %}
+      <option value="{{ v }}" {{ 'selected' if filters.min_score == v }}>{{ v }}</option>{% endfor %}
+    </select></span>
+
+  <span class="pair"><label>{{ t("at most") }}</label>
+    <select name="max_stars"><option value="0">{{ t("any stars") }}</option>{% for v in [1, 5, 25, 100, 500] %}
+      <option value="{{ v }}" {{ 'selected' if filters.max_stars == v }}>{{ v }} {{ t("stars") }}</option>{% endfor %}
+    </select></span>
+
+  <span class="pair"><label>{{ t("read") }}</label>
+    <select name="unseen"><option value="">{{ t("all of it") }}</option>
+      <option value="1" {{ 'selected' if filters.unseen }}>{{ t("only what is new to me") }}</option>
+    </select></span>
+
+  <span class="push"></span>
+  <span class="count">{{ total }} {{ t('find') if total == 1 else t('finds') }}</span>
+  {% if filters.is_filtered %}<a class="clear" href="{{ request.url.path }}">{{ t("start over") }}</a>{% endif %}
+  <noscript><button class="btn btn-sm btn-primary" type="submit">{{ t("apply") }}</button></noscript>
+</form>
+
+{% if filters.page == 1 and not filters.bookmarked %}
+<button class="arrivals" id="arrivals" hidden>
+  <b id="arrivals-n">0</b> {{ t("more came in while you were reading. Show them.") }}
+</button>
+{% endif %}
+
+{% if repos %}
+<div class="entries" id="entries">
+  {% for repo in repos %}
+    {{ entry(repo, states.get(repo.id), csrf_token, request.url.path + '?' + filters.querystring(), user, t) }}
+  {% endfor %}
+</div>
+
+{% if pages > 1 %}
+<nav class="leaves">
+  {% if filters.page > 1 %}<a href="?{{ filters.querystring(page=filters.page - 1) }}">{{ t("back") }}</a>{% endif %}
+  {% for p in range(1, pages + 1) %}
+    {% if p <= 2 or p > pages - 2 or (p >= filters.page - 2 and p <= filters.page + 2) %}
+    <a {{ 'aria-current=page' if p == filters.page }} href="?{{ filters.querystring(page=p) }}">{{ p }}</a>
+    {% elif p == 3 and filters.page > 5 %}<span>...</span>
+    {% elif p == pages - 2 and filters.page < pages - 4 %}<span>...</span>
+    {% endif %}
+  {% endfor %}
+  {% if filters.page < pages %}<a href="?{{ filters.querystring(page=filters.page + 1) }}">{{ t("onward") }}</a>{% endif %}
+</nav>
+{% endif %}
+
+{% else %}
+<div class="hush">
+  <p class="g">{{ t("No results.") }}</p>
+  {% if last_run %}
+  <p>{{ t("The collector last went out") }} {{ last_run.started_at|ago }}.
+     {{ t("Widen the window, or start over with the filters.") }}</p>
+  {% else %}
+  <p>{{ t("Nothing has been gathered yet.") }}
+     {% if user and user.is_admin %}{{ t("Send the collector out from") }}
+     <a href="/admin/sources" style="color:var(--mint)">{{ t("the admin pages") }}</a>.{% endif %}</p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

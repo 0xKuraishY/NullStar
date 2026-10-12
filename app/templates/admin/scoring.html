@@ -1,0 +1,122 @@
+{% extends "page.html" %}
+{% block content %}
+<div class="gutter">
+<div class="grid" style="grid-template-columns:minmax(0,1fr) 360px">
+  <form method="post" action="/admin/scoring" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="panel">
+      <div class="panel-head"><h2>Score weights</h2><div class="spacer"></div>
+        <span class="faint mono" style="font-size:11.5px">max points per component</span></div>
+      <div class="panel-body">
+        {% set descriptions = {
+          'relevance': 'How certainly this is a cybersecurity project (topics, keywords, readme evidence).',
+          'freshness': 'How recently the repo was created, and secondarily how recently it was pushed.',
+          'origin': 'Who published it, from Big Tech and vendor labs down to an unknown account.',
+          'substance': 'Description, README depth, topics, license, homepage, repo size.',
+          'momentum': 'Stars per day since creation: compressed on purpose so popularity cannot dominate.',
+          'gem_bonus': 'Kicker for high-relevance projects with almost no visibility.',
+          'noise_penalty': 'Subtracted for awesome-lists, course material, forks and archived repos.'
+        } %}
+        {% for key, value in weights.items() %}
+        <div class="field">
+          <label for="w_{{ key }}">{{ key.replace('_', ' ')|title }}
+            <span class="faint mono" style="font-weight:400">(default {{ defaults[key] }})</span></label>
+          <input id="w_{{ key }}" name="w_{{ key }}" type="number" step="0.5" min="0" max="100" value="{{ value }}">
+          <span class="hint">{{ descriptions.get(key, '') }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Collector behaviour</h2></div>
+      <div class="panel-body">
+        <div class="field-row">
+          <div class="field">
+            <label for="c_lookback_days">Lookback window (days)</label>
+            <input id="c_lookback_days" name="c_lookback_days" type="number" min="1" max="90" value="{{ collector.lookback_days }}">
+            <span class="hint">How far back search queries reach on each run.</span>
+          </div>
+          <div class="field">
+            <label for="c_min_score_to_keep">Minimum score to store</label>
+            <input id="c_min_score_to_keep" name="c_min_score_to_keep" type="number" min="0" max="100" value="{{ collector.min_score_to_keep }}">
+            <span class="hint">Below this, a result is discarded instead of indexed.</span>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="c_enrich_top_n">README enrichment budget</label>
+            <input id="c_enrich_top_n" name="c_enrich_top_n" type="number" min="0" max="500" value="{{ collector.enrich_top_n }}">
+            <span class="hint">Top N results per run that get their README fetched and rescored.</span>
+          </div>
+          <div class="field">
+            <label for="c_enrich_min_score">Enrichment threshold</label>
+            <input id="c_enrich_min_score" name="c_enrich_min_score" type="number" min="0" max="100" value="{{ collector.enrich_min_score }}">
+            <span class="hint">Only enrich results already scoring at least this.</span>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="c_search_pages">Search pages per query</label>
+            <input id="c_search_pages" name="c_search_pages" type="number" min="1" max="5" value="{{ collector.search_pages }}">
+          </div>
+          <div class="field">
+            <label for="c_retention_days">Retention (days)</label>
+            <input id="c_retention_days" name="c_retention_days" type="number" min="0" max="3650" value="{{ collector.retention_days }}">
+            <span class="hint">Low-score records older than this are pruned. 0 keeps everything.</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="c_max_repo_age_days">Maximum repository age (days)</label>
+          <input id="c_max_repo_age_days" name="c_max_repo_age_days" type="number" min="1" max="3650"
+                 value="{{ collector.max_repo_age_days }}">
+          <span class="hint">A repository created longer ago than this is skipped, even if it was
+            pushed to this morning. Organisation listings are mostly years old, and without this
+            the index fills with long-running projects that merely got a commit.</span>
+        </div>
+        <div class="field">
+          <label for="c_owner_lookup_min_relevance">Owner profiling threshold (0,1)</label>
+          <input id="c_owner_lookup_min_relevance" name="c_owner_lookup_min_relevance"
+                 type="number" step="0.05" min="0" max="1"
+                 value="{{ collector.owner_lookup_min_relevance }}">
+          <span class="hint">Looking up who owns a repo costs one API call, and it is the single
+            largest consumer of the GitHub quota. Results below this relevance skip the lookup and
+            stay unclassified. Lower it to catch more new accounts, raise it to stretch the quota.</span>
+        </div>
+        <button class="btn btn-primary" type="submit">Save scoring configuration</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="stack">
+    <div class="panel">
+      <div class="panel-head"><h2>Apply to existing data</h2></div>
+      <div class="panel-body">
+        <p class="muted" style="margin-top:0;font-size:12.5px">
+          Saving affects the next collection run only. Rescoring recomputes every stored
+          repository against the current weights: safe, and it never calls GitHub.</p>
+        <form method="post" action="/admin/scoring/rescore"
+              data-confirm="Recompute the score of every indexed repository?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="btn" type="submit" style="width:100%;justify-content:center">Rescore the whole archive</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>The ranking philosophy</h2></div>
+      <div class="panel-body muted" style="font-size:12.5px">
+        <p style="margin-top:0">The score answers one question: <i>if I only had ten minutes today,
+          is this repo worth one of them?</i></p>
+        <p>That is why <b>momentum</b> is capped low and <b>gem bonus</b> exists. A proof of concept
+          published this morning by an account created last week, with no stars and a sharp
+          description, should beat a famous framework that merely got a commit.</p>
+        <p style="margin-bottom:0">Raise <b>origin</b> if you care mostly about vendor and Big Tech
+          output. Raise <b>gem bonus</b> and lower <b>momentum</b> to push further into the long tail.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

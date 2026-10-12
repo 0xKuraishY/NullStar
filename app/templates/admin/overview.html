@@ -1,0 +1,117 @@
+{% extends "page.html" %}
+{% block content %}
+<div class="gutter">
+
+{% if not token_set %}
+<div class="alert alert-warn">
+  <span></span>
+  <span><b>No GitHub token configured.</b> The collector is limited to 60 requests per hour and will
+  only scratch the surface. Add one in <a href="/admin/settings" style="color:inherit;text-decoration:underline">Settings</a>
+  or via the <code class="mono">GITHUB_TOKEN</code> environment variable.</span>
+</div>
+{% endif %}
+
+<div class="stats" style="margin-bottom:16px">
+  <div class="stat"><div class="k">Users</div><div class="v">{{ stats.users }}</div>
+    <div class="sub">{{ stats.active_users }} active / {{ stats.sessions }} live sessions</div></div>
+  <div class="stat"><div class="k">Repositories</div><div class="v">{{ stats.repos|compact }}</div>
+    <div class="sub">{{ stats.repos_7d }} found this week</div></div>
+  <div class="stat"><div class="k">Sources</div><div class="v">{{ stats.sources_on }}<span class="faint" style="font-size:16px">/{{ stats.sources }}</span></div>
+    <div class="sub">enabled / configured</div></div>
+  <div class="stat"><div class="k">Collector</div>
+    <div class="v" style="font-size:18px;color:{{ 'var(--accent)' if collector_running else 'var(--text-dim)' }}">
+      {{ 'RUNNING' if collector_running else ('SCHEDULED' if scheduler_on else 'MANUAL') }}</div>
+    <div class="sub">{{ 'every ' ~ interval ~ ' min' if scheduler_on else 'scheduler disabled' }}</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:minmax(0,1fr) 360px">
+  <div class="stack">
+    <div class="panel">
+      <div class="panel-head"><h2>Recent collection runs</h2><div class="spacer"></div>
+        <a class="btn btn-sm" href="/admin/runs">All runs </a>
+        <form method="post" action="/admin/sources/run" style="display:inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="btn btn-sm btn-primary" type="submit" {{ 'disabled' if collector_running }}>
+            {{ 'Running...' if collector_running else 'Run now' }}</button>
+        </form>
+      </div>
+      <div class="panel-body" style="padding:0">
+        <table class="data">
+          <thead><tr><th>Started</th><th>Trigger</th><th>Status</th><th>Seen</th><th>New</th><th>API</th></tr></thead>
+          <tbody>
+          {% for run in runs %}
+          <tr>
+            <td class="faint">{{ run.started_at|ago }}</td>
+            <td class="mono faint">{{ run.trigger }}</td>
+            <td><span class="badge" style="color:{{ 'var(--accent)' if run.status == 'ok' else ('var(--high)' if run.status in ('partial','running','interrupted') else 'var(--critical)') }}">{{ run.status }}</span></td>
+            <td class="mono">{{ run.repos_seen }}</td>
+            <td class="mono" style="color:var(--accent)">+{{ run.repos_new }}</td>
+            <td class="mono faint">{{ run.api_calls }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="faint" style="text-align:center;padding:24px">
+            No runs yet: hit "Run now" to start the first collection.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Recent activity</h2><div class="spacer"></div>
+        <a class="btn btn-sm btn-ghost" href="/admin/audit">Full audit log </a></div>
+      <div class="panel-body" style="padding:0">
+        <table class="data">
+          <tbody>
+          {% for entry in recent_audit %}
+          <tr>
+            <td class="mono" style="width:190px">{{ entry.action }}</td>
+            <td>{{ entry.actor }}</td>
+            <td class="faint">{{ entry.target }}</td>
+            <td class="faint mono" style="text-align:right">{{ entry.created_at|ago }}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="panel">
+      <div class="panel-head"><h2>Access control</h2></div>
+      <div class="panel-body" style="font-size:13px">
+        <p class="muted" style="margin-top:0">
+          The first account created owns this instance. Everyone else arrives through an
+          admin-created account or a single-use invite link.</p>
+        <div class="row-h" style="margin-top:12px">
+          <a class="btn" href="/admin/users">Manage users</a>
+          <a class="btn" href="/admin/invites">
+            Invites {% if stats.pending_invites %}<span class="badge">{{ stats.pending_invites }}</span>{% endif %}</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Roles</h2></div>
+      <div class="panel-body" style="font-size:12.5px">
+        <p style="margin-top:0"><span class="badge">admin</span>  Full control: users, invites, sources, scoring, settings.</p>
+        <p><span class="badge">analyst</span>  Reads the radar, bookmarks, notes, saved views, API keys.</p>
+        <p style="margin-bottom:0"><span class="badge">viewer</span>  Same reading rights, intended for read-only observers.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Tuning</h2></div>
+      <div class="panel-body">
+        <div class="row-h">
+          <a class="btn" href="/admin/sources">Sources</a>
+          <a class="btn" href="/admin/scoring">Scoring</a>
+          <a class="btn" href="/admin/settings">Settings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

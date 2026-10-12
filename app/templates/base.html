@@ -1,0 +1,46 @@
+{% extends "_shell.html" %}
+{% block body %}
+<div class="spread">
+  <main>
+    {% if flash %}<div class="alert alert-{{ flash.kind }}" style="margin-top:22px">{{ flash.message }}</div>{% endif %}
+    {% if errors %}<div class="alert alert-error" style="margin-top:22px">
+      <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <aside class="rail">
+
+    <section>
+      <h3>{{ t("Cut by craft") }}</h3>
+      {% for slug, label, accent in (facets.categories[:9] if facets else []) %}
+      <a class="mini" href="/?category={{ slug }}">{{ t(label) }}</a>
+      {% endfor %}
+      <a class="mini faint" href="/?category=">{{ t("Everything") }}</a>
+    </section>
+
+    <section>
+      <h3>{{ t("Shortcuts") }}</h3>
+      <a class="mini" href="/?max_stars=1&sort=score">{{ t("Nobody has starred it") }}</a>
+      <a class="mini" href="/?window=24h&sort=new">{{ t("Landed today") }}</a>
+      <a class="mini" href="/?min_score=80">{{ t("Scoring 80 and up") }}</a>
+      <a class="mini" href="/?signal=new-account">{{ t("From brand new accounts") }}</a>
+    </section>
+
+    {% if not user %}
+    <section>
+      <h3>{{ t("Reading as a guest") }}</h3>
+      <p class="muted" style="font-size:13px;margin:0 0 12px">
+        {{ t("Everything here is open. An account only adds what is yours: keeping finds, hiding noise, notes and saved views.") }}</p>
+      <a class="btn btn-sm btn-primary" href="/register">{{ t("Make an account") }}</a>
+    </section>
+    {% endif %}
+
+    {% if saved_views %}
+    <section>
+      <h3>{{ t("Your views") }}</h3>
+      {% for view in saved_views %}<a class="mini" href="/?{{ view.query }}">{{ view.name }}</a>{% endfor %}
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "page.html" %}
+{% block content %}
+<div class="gutter">
+
+{% if generated_password %}
+<div class="alert alert-ok" style="flex-direction:column;align-items:stretch">
+  <strong>Temporary password for {{ generated_for }}: copy it now, it is never shown again.</strong>
+  <div class="secret" style="margin-top:8px">{{ generated_password }}</div>
+  <div class="row-h" style="margin-top:8px">
+    <button class="btn btn-sm" data-copy="{{ generated_password }}">copy password</button>
+    <span class="faint" style="font-size:12px">They will be forced to change it at first sign-in.</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="grid" style="grid-template-columns:minmax(0,1fr) 330px">
+  <div class="panel">
+    <div class="panel-head"><h2>Accounts</h2><div class="spacer"></div>
+      <span class="faint mono" style="font-size:11.5px">{{ users|length }} total</span></div>
+    <div class="panel-body" style="padding:0">
+      <table class="data">
+        <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Sessions</th><th>Last sign-in</th><th></th></tr></thead>
+        <tbody>
+        {% for u in users %}
+        <tr>
+          <td>
+            <div style="font-weight:600">{{ u.display_name or u.username }}
+              {% if u.id == user.id %}<span class="badge" style="color:var(--accent)">you</span>{% endif %}</div>
+            <div class="faint" style="font-size:12px">joined {{ u.created_at|ago }}</div>
+          </td>
+          <td>
+            <form method="post" action="/admin/users/{{ u.id }}/role">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <select name="role" onchange="this.form.submit()"
+                      style="background:var(--bg-input);border:1px solid var(--border);color:var(--text);
+                             padding:3px 7px;border-radius:5px;font-size:12px">
+                {% for r in roles %}<option value="{{ r }}" {{ 'selected' if u.role == r }}>{{ r }}</option>{% endfor %}
+              </select>
+            </form>
+          </td>
+          <td>
+            <span class="badge" style="color:{{ 'var(--accent)' if u.is_active else 'var(--critical)' }}">
+              {{ 'active' if u.is_active else 'disabled' }}</span>
+            {% if u.must_change_password %}<span class="badge faint">pwd reset</span>{% endif %}
+            {% if u.locked_until %}<span class="badge" style="color:var(--high)">locked</span>{% endif %}
+          </td>
+          <td class="mono faint">{{ sessions.get(u.id, 0) }}</td>
+          <td class="faint">{{ u.last_login_at|ago if u.last_login_at else 'never' }}</td>
+          <td class="actions">
+            <form method="post" action="/admin/users/{{ u.id }}/reset" data-confirm="Reset this user's password and sign out all their sessions?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="btn btn-sm" type="submit">Reset pwd</button>
+            </form>
+            <form method="post" action="/admin/users/{{ u.id }}/toggle">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="btn btn-sm" type="submit">{{ 'Disable' if u.is_active else 'Enable' }}</button>
+            </form>
+            <form method="post" action="/admin/users/{{ u.id }}/delete" data-confirm="Permanently delete {{ u.username }}? This cannot be undone.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="btn btn-sm btn-danger" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel" style="align-self:start">
+    <div class="panel-head"><h2>Create an account</h2></div>
+    <div class="panel-body">
+      <form method="post" action="/admin/users">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" required value="{{ form.username if form else '' }}">
+        </div>
+        <div class="field">
+          <label for="role">Role</label>
+          <select id="role" name="role">
+            {% for r in roles %}<option value="{{ r }}" {{ 'selected' if form and form.role == r }}>{{ r }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="text" autocomplete="off" placeholder="leave blank to generate one">
+          <span class="hint">Leave empty and a strong temporary password is generated and shown once.</span>
+        </div>
+        <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">Create account</button>
+      </form>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

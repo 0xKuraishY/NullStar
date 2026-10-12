@@ -1,0 +1,27 @@
+{% extends "auth_base.html" %}
+{% block content %}
+<h1>{{ t("Claim it") }}</h1>
+<p class="sub">{{ t("Nobody has an account here yet. The first one made becomes the") }}
+   <b>{{ t("administrator") }}</b>{{ t(", and from then on only that account can let anyone else in.") }}</p>
+
+<form method="post" action="/setup">
+  <div class="field">
+    <label for="username">{{ t("Pick a name") }}</label>
+    <input id="username" name="username" autofocus required value="{{ form.username if form else '' }}">
+    <span class="hint">{{ t("Three to thirty two characters. Letters, digits, dash, underscore.") }}</span>
+  </div>
+  <div class="field">
+    <label for="password">{{ t("Password") }}</label>
+    <input id="password" name="password" type="password" autocomplete="new-password" required>
+    <span class="hint">{{ t("Twelve characters at least, with an upper case, a lower case and a digit.") }}</span>
+  </div>
+  <div class="field">
+    <label for="password_confirm">{{ t("Once more") }}</label>
+    <input id="password_confirm" name="password_confirm" type="password" autocomplete="new-password" required>
+  </div>
+  <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">
+    {{ t("Take the keys") }}</button>
+</form>
+<p class="faint" style="margin-top:22px;font-size:13px">
+  {{ t("This account is for whoever runs the instance. Visitors never need one.") }}</p>
+{% endblock %}

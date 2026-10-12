@@ -1,0 +1,105 @@
+{% extends "page.html" %}
+{% block content %}
+
+<div class="leaf-head">
+  <h1>{{ t("Your library") }}</h1>
+  <p class="sub">{{ t("What you kept, how you filed it, and whose work you follow.") }}</p>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="k">{{ t("Saved") }}</div><div class="v">{{ kept }}</div>
+    <div class="sub"><a href="/bookmarks">{{ t("see them all") }}</a></div></div>
+  <div class="stat"><div class="k">{{ t("Collections") }}</div><div class="v">{{ collections|length }}</div>
+    <div class="sub">{{ t("folders of your own") }}</div></div>
+  <div class="stat"><div class="k">{{ t("Unfiled") }}</div>
+    <div class="v" style="color:{{ 'var(--amber)' if unfiled else 'inherit' }}">{{ unfiled }}</div>
+    <div class="sub">{{ t("kept but in no folder") }}</div></div>
+  <div class="stat"><div class="k">{{ t("Notes") }}</div><div class="v">{{ notes }}</div>
+    <div class="sub">{{ t("things you wrote down") }}</div></div>
+</div>
+
+<div class="duo">
+  <div>
+    <div class="slab">
+      <h2>{{ t("Collections") }}<span class="push"></span>
+        <span class="faint" style="text-transform:none;letter-spacing:0">{{ t("A find can sit in several.") }}</span></h2>
+
+      {% if collections %}
+      <div class="folders">
+        {% for c in collections %}
+        <a class="folder" href="/collections/{{ c.id }}">
+          <span class="spine" style="background:var(--{{ c.colour }})"></span>
+          <span class="folder-body">
+            <span class="folder-name">{{ c.name }}
+              {% if c.is_public %}<span class="shared" title="{{ t('Shared by link') }}">{{ t("shared") }}</span>{% endif %}
+            </span>
+            {% if c.description %}<span class="folder-desc">{{ c.description }}</span>{% endif %}
+          </span>
+          <span class="folder-n">{{ collection_counts.get(c.id, 0) }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="muted">{{ t("No collections yet. Make one and start filing.") }}</p>
+      {% endif %}
+    </div>
+
+    <div class="slab">
+      <h2>{{ t("Following") }}<span class="push"></span>
+        <span class="faint" style="text-transform:none;letter-spacing:0">{{ t("Their new work is flagged in the wire.") }}</span></h2>
+      {% if follows %}
+      <div class="chips">
+        {% for f in follows %}
+        <span class="chip">
+          <a href="/?q={{ f.login }}">{{ f.login }}</a>
+          <form method="post" action="/follows/{{ f.id }}/delete" style="display:inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button type="submit" title="{{ t('Stop following') }}">x</button>
+          </form>
+        </span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="muted">{{ t("Follow the people whose work you never want to miss.") }}</p>
+      {% endif %}
+      <form method="post" action="/follows" class="row-h" style="margin-top:14px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="back" value="/library">
+        <input name="login" placeholder="{{ t('A GitHub account, for instance trailofbits') }}"
+               style="flex:1;min-width:200px;background:transparent;border:none;
+                      border-bottom:1px solid var(--rule-2);color:var(--ink);padding:7px 2px">
+        <button class="btn" type="submit">{{ t("Follow") }}</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="slab">
+    <h2>{{ t("New collection") }}</h2>
+    <form method="post" action="/collections">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="back" value="/library">
+      <div class="field">
+        <label for="name">{{ t("Name") }}</label>
+        <input id="name" name="name" required placeholder="{{ t('For instance: to try this weekend') }}">
+      </div>
+      <div class="field">
+        <label for="description">{{ t("What goes in it") }}</label>
+        <input id="description" name="description" placeholder="{{ t('Optional') }}">
+      </div>
+      <div class="field">
+        <label>{{ t("Colour") }}</label>
+        <div class="swatches">
+          {% for key, label in colours.items() %}
+          <label class="swatch" title="{{ label }}">
+            <input type="radio" name="colour" value="{{ key }}" {{ 'checked' if loop.first }}>
+            <span style="background:var(--{{ key }})"></span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <button class="btn btn-primary" type="submit">{{ t("Make it") }}</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

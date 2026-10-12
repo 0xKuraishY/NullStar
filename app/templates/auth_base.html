@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="{{ lang }}" data-theme="{{ theme }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ t(title) }} / Nullstar</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<div class="gate">
+  <aside class="gate-story">
+    <div class="aura" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div>
+      <a class="wordmark" href="/" style="font-size:27px">Nullstar<span class="dot">.</span></a>
+      <h2 style="margin-top:38px">{{ t("Somebody shipped it this morning.") }}
+        <em>{{ t("Nobody has seen it yet.") }}</em></h2>
+      <p>{{ t("Every other way of finding code ranks by how many people already know about it, which buries anything published today. This one ranks by what the work is and how new it is, so a proof of concept with no stars, from an account opened last week, sits above a framework with forty thousand.") }}</p>
+    </div>
+
+    <div class="glance">
+      <div class="g-row"><span class="s" style="color:var(--rose)">97</span>
+        <span class="t">{{ t("unauthenticated remote code execution, with a working proof") }}</span>
+        <span class="a">2 {{ t("stars") }}</span></div>
+      <div class="g-row"><span class="s" style="color:var(--amber)">88</span>
+        <span class="t">{{ t("signed driver abused to hand out kernel privileges") }}</span>
+        <span class="a">1 {{ t("star") }}</span></div>
+      <div class="g-row"><span class="s" style="color:var(--amber)">84</span>
+        <span class="t">{{ t("offensive toolkit, written from scratch, first commit today") }}</span>
+        <span class="a">{{ t("no stars") }}</span></div>
+      <div class="g-row"><span class="s" style="color:var(--sky)">71</span>
+        <span class="t">{{ t("vendor lab releases its internal tooling") }}</span>
+        <span class="a">340 {{ t("stars") }}</span></div>
+    </div>
+  </aside>
+
+  <section class="gate-form">
+    <div class="gate-card">
+      {% set here = request.url.path + ('?' ~ request.url.query if request.url.query else '') %}
+      {% set other = 'fr' if lang == 'en' else 'en' %}
+      <div class="gate-tools">
+        <a class="btn guest" href="/guest">{{ t("Guest mode") }}</a>
+        <form method="post" action="/theme/{{ 'dark' if theme == 'light' else 'light' }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="back" value="{{ here }}">
+          <button class="icon" type="submit"
+                  title="{{ t('Switch to dark') if theme == 'light' else t('Switch to light') }}"
+                  aria-label="{{ t('Switch to dark') if theme == 'light' else t('Switch to light') }}">
+            {% if theme == 'light' %}
+            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+              <path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"
+                    fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+            </svg>
+            {% else %}
+            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+              <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.7"/>
+              <g stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+                <path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3"/>
+                <path d="M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6"/>
+              </g>
+            </svg>
+            {% endif %}
+          </button>
+        </form>
+        <form method="post" action="/lang/{{ other }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="back" value="{{ here }}">
+          <button class="icon lang" type="submit"
+                  title="{{ langs[other] }}" aria-label="{{ langs[other] }}">{{ other|upper }}</button>
+        </form>
+      </div>
+      {% if flash %}<div class="alert alert-{{ flash.kind }}">{{ flash.message }}</div>{% endif %}
+      {% if errors %}<div class="alert alert-error">
+        <ul>{% for e in errors %}<li>{{ e }}</li>{% endfor %}</ul></div>{% endif %}
+      {% block content %}{% endblock %}
+    </div>
+  </section>
+</div>
+<script src="/static/js/app.js" defer
+        data-word-find="{{ t('Filter') }}" data-word-none="{{ t('Nothing matches') }}"></script>
+</body>
+</html>

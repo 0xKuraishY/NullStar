@@ -1,0 +1,117 @@
+{% extends "page.html" %}
+{% from "_entry.html" import entry %}
+{% block content %}
+
+<div class="leaf-head">
+  <p class="sub" style="margin-bottom:8px">
+    <a href="/library">{{ t("Your library") }}</a>
+    {% if collection.is_public %}<span class="faint">/</span>
+    <span style="color:var(--mint)">{{ t("shared by link") }}</span>{% endif %}
+  </p>
+  <h1 style="border-left:4px solid var(--{{ collection.colour }});padding-left:14px">{{ collection.name }}</h1>
+  {% if collection.description %}<p class="sub">{{ collection.description }}</p>{% endif %}
+</div>
+
+{% if share_url %}
+<div class="slab">
+  <h2>{{ t("Anybody with this link can read it") }}</h2>
+  <div class="secret">{{ share_url }}</div>
+  <div class="row-h" style="margin-top:10px">
+    <button class="btn btn-sm" data-copy="{{ share_url }}">{{ t("copy link") }}</button>
+    <form method="post" action="/collections/{{ collection.id }}/reshare"
+          data-confirm="{{ t('Make a new link and kill the old one?') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="btn btn-sm" type="submit">{{ t("new link") }}</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="toolbar">
+  <span class="muted">{{ items|length }} {{ t("in here") }}</span>
+  <span class="push" style="flex:1"></span>
+  <form method="get" class="row-h" data-autosubmit>
+    <label class="faint" style="font-size:11.5px;letter-spacing:1px;text-transform:uppercase">{{ t("order") }}</label>
+    <select name="sort">
+      {% for key, label in sorts.items() %}
+      <option value="{{ key }}" {{ 'selected' if sort == key }}>{{ t(label) }}</option>
+      {% endfor %}
+    </select>
+  </form>
+  <form method="post" action="/collections/{{ collection.id }}/share">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="btn btn-sm" type="submit">
+      {{ t("Stop sharing") if collection.is_public else t("Share by link") }}</button>
+  </form>
+  <form method="post" action="/collections/{{ collection.id }}/delete"
+        data-confirm="{{ t('Delete this collection? The repositories stay in your library.') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="btn btn-sm btn-danger" type="submit">{{ t("Delete") }}</button>
+  </form>
+</div>
+
+{% if items %}
+<div class="entries">
+  {% for item in items %}
+  <div class="filed">
+    {{ entry(item.repo, None, csrf_token, '/collections/' ~ collection.id, user, t) }}
+    <div class="filed-note">
+      <form method="post" action="/collections/{{ collection.id }}/items/{{ item.id }}/note" class="row-h">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input name="note" value="{{ item.note }}" placeholder="{{ t('Why did you file this?') }}"
+               style="flex:1;background:transparent;border:none;border-bottom:1px dotted var(--rule-2);
+                      color:var(--ink-2);padding:5px 2px;font-size:13px">
+        <button class="btn btn-sm btn-ghost" type="submit">{{ t("save") }}</button>
+      </form>
+      {% if sort == 'manual' %}
+      <span class="movers">
+        {% for dir, glyph in [('up', 'up'), ('down', 'down')] %}
+        <form method="post" action="/collections/{{ collection.id }}/items/{{ item.id }}/move">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="direction" value="{{ dir }}">
+          <button type="submit">{{ glyph|safe }}</button>
+        </form>
+        {% endfor %}
+      </span>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="hush">
+  <p class="g">{{ t("Nothing filed here yet.") }}</p>
+  <p>{{ t("Open any find and file it from its page, or from the wire.") }}</p>
+</div>
+{% endif %}
+
+<div class="slab" style="margin-top:34px">
+  <h2>{{ t("Rename or recolour") }}</h2>
+  <form method="post" action="/collections/{{ collection.id }}/edit">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="field-row">
+      <div class="field">
+        <label for="name">{{ t("Name") }}</label>
+        <input id="name" name="name" value="{{ collection.name }}" required>
+      </div>
+      <div class="field">
+        <label for="description">{{ t("What goes in it") }}</label>
+        <input id="description" name="description" value="{{ collection.description }}">
+      </div>
+    </div>
+    <div class="field">
+      <label>{{ t("Colour") }}</label>
+      <div class="swatches">
+        {% for key, label in colours.items() %}
+        <label class="swatch" title="{{ label }}">
+          <input type="radio" name="colour" value="{{ key }}" {{ 'checked' if collection.colour == key }}>
+          <span style="background:var(--{{ key }})"></span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <button class="btn" type="submit">{{ t("Save") }}</button>
+  </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,34 @@
+# secrets and local config
+.env
+.env.local
+*.pem
+*.key
+
+# data
+data/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.db
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# editors
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+
+# docker
+docker-compose.override.yml

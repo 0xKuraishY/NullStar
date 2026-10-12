@@ -1,0 +1,12 @@
+{% macro langswitch(lang, langs, csrf_token, back) %}
+<span class="langs">
+  {% for code, label in langs.items() %}
+  <form method="post" action="/lang/{{ code }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="back" value="{{ back }}">
+    <button type="submit" {{ 'aria-current=true' if lang == code }}
+            title="{{ label }}">{{ code|upper }}</button>
+  </form>
+  {% endfor %}
+</span>
+{% endmacro %}

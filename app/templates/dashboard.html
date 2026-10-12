@@ -1,0 +1,127 @@
+{% extends "page.html" %}
+{% block content %}
+
+<div class="leaf-head">
+  <h1>{{ t("The shape of it") }}</h1>
+  <p class="sub">{{ t("What the collector has been pulling in, and from where.") }}</p>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="k">{{ t("Held") }}</div><div class="v">{{ totals.all|compact }}</div>
+    <div class="sub">{{ t("repositories in all") }}</div></div>
+  <div class="stat"><div class="k">{{ t("This week") }}</div><div class="v" style="color:var(--mint)">{{ totals['7d']|compact }}</div>
+    <div class="sub">newly found</div></div>
+  <div class="stat"><div class="k">{{ t("Yesterday on") }}</div><div class="v">{{ totals['24h']|compact }}</div>
+    <div class="sub">newly found</div></div>
+  <div class="stat"><div class="k">{{ t("Worth the time") }}</div><div class="v" style="color:var(--amber)">{{ totals.high|compact }}</div>
+    <div class="sub">{{ t("scoring 65 or better") }}</div></div>
+</div>
+
+<div class="slab">
+  {% set peak = (timeline | map(attribute='count') | max) or 1 %}
+  <h2>{{ t("Thirty days of arrivals") }}<span class="push"></span>
+    <span class="faint" style="text-transform:none;letter-spacing:0">{{ t("busiest day held") }} {{ peak }}</span></h2>
+  <div class="spline">
+    {% for d in timeline %}
+    <i style="height:{{ (d.count / peak * 100)|round|int }}%" title="{{ d.day }}: {{ d.count }}"></i>
+    {% endfor %}
+  </div>
+  <p class="faint" style="display:flex;justify-content:space-between;font-size:12px;margin-top:8px">
+    <span>{{ timeline[0].day }}</span><span>{{ timeline[-1].day }}</span></p>
+</div>
+
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(290px,1fr))">
+  <div class="slab">
+    <h2>{{ t("Who is publishing") }}</h2>
+    {% set tmax = (tiers | map(attribute=1) | max) if tiers else 1 %}
+    <div class="ranks">
+      {% for tier, count in tiers %}
+      <div class="r">
+        <a href="/?tier={{ tier }}" class="muted">{{ t(tier_labels.get(tier, tier)) }}</a>
+        <span class="tr"><i style="width:{{ (count / tmax * 100)|round|int }}%"></i></span>
+        <span class="n">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="slab">
+    <h2>{{ t("Which craft") }}</h2>
+    {% set cmax = (categories | map(attribute=1) | max) if categories else 1 %}
+    <div class="ranks">
+      {% for slug, count in categories %}
+      <div class="r">
+        <a href="/?category={{ slug }}" class="muted">{{ t(category_label(slug)) }}</a>
+        <span class="tr"><i style="width:{{ (count / cmax * 100)|round|int }}%;
+              background:{{ category_accent(slug) }}"></i></span>
+        <span class="n">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="slab">
+    <h2>{{ t("Written in") }}</h2>
+    {% set lmax = (languages | map(attribute=1) | max) if languages else 1 %}
+    <div class="ranks">
+      {% for lang, count in languages %}
+      <div class="r">
+        <a href="/?language={{ lang }}" class="muted">{{ lang }}</a>
+        <span class="tr"><i style="width:{{ (count / lmax * 100)|round|int }}%"></i></span>
+        <span class="n">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="duo">
+  <div class="slab">
+    <h2>{{ t("Best of the week") }}<span class="push"></span>
+      <a class="faint" href="/?window=7d&sort=score" style="text-transform:none;letter-spacing:0">{{ t("see them all") }}</a></h2>
+    <table class="data"><tbody>
+    {% for repo in top %}
+    <tr>
+      <td class="heavy" style="width:44px;font-size:19px">{{ repo.score|round|int }}</td>
+      <td><a href="/repo/{{ repo.id }}" class="heavy" style="font-size:16px">{{ repo.name }}</a>
+        <span class="faint">{{ t("by") }} {{ repo.owner }}</span>
+        <div class="faint" style="font-size:13px;max-width:52ch;overflow:hidden;
+             text-overflow:ellipsis;white-space:nowrap">{{ repo.description|plain or t('no description') }}</div></td>
+      <td class="faint fig nowrap" style="text-align:right">{{ repo.stars|compact }}</td>
+    </tr>
+    {% else %}
+    <tr><td class="faint" style="padding:26px 0">{{ t("Nothing in the last seven days.") }}</td></tr>
+    {% endfor %}
+    </tbody></table>
+  </div>
+
+  <div class="stack">
+    <div class="slab">
+      <h2>{{ t("The collector") }}</h2>
+      <table class="data"><tbody>
+      {% for run in runs %}
+      <tr>
+        <td style="color:var({{ '--mint' if run.status == 'ok' else
+            ('--amber' if run.status in ('partial','running','interrupted') else '--rose') }})">{{ run.status }}</td>
+        <td class="faint fig">{{ run.repos_new }} {{ t("new") }}</td>
+        <td class="faint nowrap" style="text-align:right">{{ run.started_at|ago }}</td>
+      </tr>
+      {% else %}<tr><td class="faint">{{ t("It has not gone out yet.") }}</td></tr>{% endfor %}
+      </tbody></table>
+    </div>
+
+    {% if events %}
+    <div class="slab">
+      <h2>{{ t("Movement") }}</h2>
+      <table class="data"><tbody>
+      {% for e in events %}
+      <tr><td><a href="/repo/{{ e.repo_id }}" class="muted" style="font-size:13px">{{ e.detail }}</a></td>
+        <td class="faint nowrap" style="text-align:right">{{ e.created_at|ago }}</td></tr>
+      {% endfor %}
+      </tbody></table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

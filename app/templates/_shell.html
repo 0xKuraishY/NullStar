@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="{{ lang }}" data-theme="{{ theme }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>{{ t(title) }} / Nullstar</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="/static/fonts/fonts.css" as="style">
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+{% include "_masthead.html" %}
+{% block body %}{% endblock %}
+
+<div class="pal" id="pal" hidden>
+  <div class="pal-box">
+    <input type="text" id="pal-input" placeholder="{{ t('Where to? Or type words to search the wire.') }}"
+           autocomplete="off" spellcheck="false">
+    <div class="pal-list" id="pal-list"></div>
+  </div>
+</div>
+
+<script src="/static/js/app.js" defer data-lang="{{ lang }}"
+        data-word-find="{{ t('Filter') }}" data-word-none="{{ t('Nothing matches') }}"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{% extends "page.html" %}
+{% from "_entry.html" import entry %}
+{% block content %}
+
+<div class="leaf-head">
+  <p class="sub" style="margin-bottom:8px">{{ t("A collection shared by") }} {{ owner_name }}</p>
+  <h1 style="border-left:4px solid var(--{{ collection.colour }});padding-left:14px">{{ collection.name }}</h1>
+  {% if collection.description %}<p class="sub">{{ collection.description }}</p>{% endif %}
+  <p class="sub">{{ items|length }} {{ t("finds") }}</p>
+</div>
+
+{% if items %}
+<div class="entries">
+  {% for item in items %}
+  <div class="filed">
+    {{ entry(item.repo, None, csrf_token, '/shared/' ~ collection.share_token, user, t) }}
+    {% if item.note %}
+    <p class="filed-why">{{ item.note }}</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="hush"><p class="g">{{ t("Nothing filed here yet.") }}</p></div>
+{% endif %}
+
+{% if not user %}
+<div class="slab" style="margin-top:40px;text-align:center">
+  <p class="muted" style="font-size:16px;margin-bottom:16px">
+    {{ t("Nullstar watches GitHub for new security work and ranks it by what it is, not by how many people already know about it.") }}</p>
+  <div class="row-h" style="justify-content:center">
+    <a class="btn btn-primary" href="/">{{ t("See the wire") }}</a>
+    <a class="btn" href="/register">{{ t("Make an account") }}</a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

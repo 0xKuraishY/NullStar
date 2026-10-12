@@ -1,0 +1,33 @@
+{% extends "auth_base.html" %}
+{% block content %}
+<h1>{{ t("Make an account") }}</h1>
+{% if locked %}
+<p class="sub">{{ t("This instance only takes people who were invited.") }}</p>
+<a class="btn" href="/">{{ t("Browse without one") }}</a>
+{% else %}
+<p class="sub">
+  {% if code %}{{ t("You are using an invitation.") }}
+  {% else %}{{ t("A name and a password. That is all we ask.") }}{% endif %}
+  {{ t("An account only adds what is yours: saved projects, collections and notes.") }}</p>
+<form method="post" action="/register">
+  <input type="hidden" name="code" value="{{ code or '' }}">
+  <div class="field">
+    <label for="username">{{ t("Pick a name") }}</label>
+    <input id="username" name="username" autofocus required value="{{ form.username if form else '' }}">
+  </div>
+  <div class="field">
+    <label for="password">{{ t("Password") }}</label>
+    <input id="password" name="password" type="password" autocomplete="new-password" required>
+    <span class="hint">{{ t("Twelve characters at least, mixed case, one digit.") }}</span>
+  </div>
+  <div class="field">
+    <label for="password_confirm">{{ t("Once more") }}</label>
+    <input id="password_confirm" name="password_confirm" type="password" autocomplete="new-password" required>
+  </div>
+  <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">
+    {{ t("Make it") }}</button>
+</form>
+<p class="faint" style="margin-top:22px;font-size:13px">
+  {{ t("Already have one?") }} <a href="/login" style="color:var(--mint)">{{ t("Sign in") }}</a>.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends "page.html" %}
+{% block content %}
+{% set bd = repo.score_breakdown or {} %}
+{% set b = band(repo.score) %}
+
+<div class="leaf-head">
+  <p class="sub" style="margin-bottom:10px">
+    {{ t(tier_labels.get(repo.owner_tier, repo.owner_tier)) }}
+    {% if repo.owner_label %}<span class="faint">({{ repo.owner_label }})</span>{% endif %}
+    <span class="faint">/</span> {{ t("found") }} {{ repo.discovered_at|ago }}
+  </p>
+  <h1>{{ repo.name }}</h1>
+  <p class="sub">{{ t("by") }} {{ repo.owner }}{% if repo.language %}, {{ t("written in") }} {{ repo.language }}{% endif %}.
+     {{ repo.stars|compact }} {{ t('star') if repo.stars == 1 else t('stars') }} {{ t("today,") }}
+     {{ repo.stars_at_discovery }} {{ t("when we found it.") }}</p>
+</div>
+
+<div class="duo">
+  <div>
+    <div class="slab">
+      <p style="font-size:19px;line-height:1.55;color:var(--ink);max-width:60ch;margin:0 0 20px">
+        {{ repo.description|plain or t('The author left no description.') }}</p>
+
+      <p class="entry-note" style="font-size:13.5px;margin-bottom:24px">
+        {%- for slug in repo.categories or [] -%}
+          {%- if not loop.first %}<span class="sep">/</span>{% endif -%}
+          <span class="dom">{{ t(category_label(slug)) }}</span>
+        {%- endfor -%}
+        {%- for s in repo.signals or [] -%}
+          <span class="sep">/</span><span class="cry
+            {{ 'cry-gem' if s=='hidden-gem' else ('cry-major' if s=='major-publisher'
+               else ('cry-acct' if s=='new-account' else ('cry-today' if s=='just-created'
+               else ('cry-trend' if s=='trending' else '')))) }}">{{ s.replace('-', ' ') }}</span>
+        {%- endfor -%}
+      </p>
+
+      <div class="row-h">
+        <a class="btn btn-primary" href="{{ repo.html_url }}" target="_blank" rel="noopener noreferrer">{{ t("Read it on GitHub") }}</a>
+        {% if repo.homepage %}<a class="btn" href="{{ repo.homepage }}" target="_blank" rel="noopener noreferrer">{{ t("Its own page") }}</a>{% endif %}
+        {% if user %}
+        <form method="post" action="/repo/{{ repo.id }}/bookmark">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input type="hidden" name="back" value="/repo/{{ repo.id }}">
+          <button class="btn {{ 'btn-primary' if state and state.bookmarked }}" type="submit">
+            {{ t('Kept') if state and state.bookmarked else t('Keep this') }}</button>
+        </form>
+        {% else %}
+        <a class="btn" href="/login?next=/repo/{{ repo.id }}">{{ t("Sign in to keep it") }}</a>
+        {% endif %}
+        <a class="btn btn-ghost" href="/?q={{ repo.owner }}">{{ t("More from") }} {{ repo.owner }}</a>
+      </div>
+
+      {% if user %}
+      <div style="margin-top:20px">
+        <p class="faint" style="font-size:11px;letter-spacing:1px;text-transform:uppercase;margin:0 0 9px">
+          {{ t("File it under") }}</p>
+        <div class="filer">
+          {% for c in collections %}
+          <form method="post" action="/repo/{{ repo.id }}/file">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="collection_id" value="{{ c.id }}">
+            <input type="hidden" name="back" value="/repo/{{ repo.id }}">
+            <button type="submit" aria-pressed="{{ 'true' if c.id in filed_in else 'false' }}">
+              <span class="pip" style="background:var(--{{ c.colour }})"></span>{{ c.name }}</button>
+          </form>
+          {% endfor %}
+          <a class="btn btn-sm make" href="/library" style="border-radius:999px">{{ t("New collection") }}</a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if repo.readme_excerpt %}
+    <div class="slab">
+      <h2>{{ t("What the author says") }}<span class="push"></span>
+        <span class="faint" style="text-transform:none;letter-spacing:0;font-size:11.5px">
+          {{ t("first") }} {{ repo.readme_length|compact }} {{ t("characters of the readme") }}</span></h2>
+      <div class="excerpt">{{ repo.readme_excerpt|excerpt }}</div>
+    </div>
+    {% endif %}
+
+    <div class="slab">
+      <h2>{{ t("How it earned") }} {{ repo.score|round|int }}</h2>
+      {% if bd.components %}
+      <div class="scorebars">
+        {% for key, comp in bd.components.items() %}
+        {% set pts = comp.points or 0 %}
+        <div class="r">
+          <span class="muted">{{ key.replace('_', ' ')|capitalize }}</span>
+          <span class="tr"><i class="{{ 'neg' if pts < 0 }}"
+            style="width:{{ ((pts|abs) / (comp.weight if comp.weight else 1) * 100)|round|int }}%"></i></span>
+          <span class="p" style="color:{{ 'var(--rose)' if pts < 0 else 'var(--ink-2)' }}">{{ '%+.1f'|format(pts) }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="muted" style="font-size:13px;margin-top:16px">
+        {{ t("Created") }} {{ bd.age_days if bd.age_days is not none else '?' }}
+        {{ t("days ago, last touched") }} {{ bd.pushed_days if bd.pushed_days is not none else '?' }}
+        {{ t("days ago, gathering") }} {{ '%.2f'|format(bd.star_velocity or 0) }} {{ t("stars a day.") }}</p>
+
+      {% if bd.components.gem_bonus and bd.components.gem_bonus.reason %}
+      <div class="alert alert-warn" style="margin-top:16px">
+        {{ t("Lifted for being overlooked:") }} {{ bd.components.gem_bonus.reason }}.</div>
+      {% endif %}
+      {% if bd.components.noise_penalty and bd.components.noise_penalty.reasons %}
+      <div class="alert alert-error" style="margin-top:12px">
+        {{ t("Marked down for:") }} {{ bd.components.noise_penalty.reasons|join('; ') }}.</div>
+      {% endif %}
+
+      {% if bd.matched_terms %}
+      <p class="muted" style="font-size:13px;margin-top:18px">
+        <span class="faint" style="text-transform:uppercase;letter-spacing:1px;font-size:10.5px">
+          {{ t("Read as security work because of") }}</span><br>
+        {% for cat, terms in bd.matched_terms.items() %}{% for term in terms[:5] %}
+        <span class="fig" style="font-size:12.5px">{{ term }}</span>{% if not loop.last %}<span class="faint">, </span>{% endif %}
+        {% endfor %}{% endfor %}
+      </p>
+      {% endif %}
+      {% else %}
+      <p class="faint">{{ t("No working shown for this one. Recompute from the workshop.") }}</p>
+      {% endif %}
+    </div>
+
+    {% if user %}
+    <div class="slab">
+      <h2>{{ t("Your note") }}</h2>
+      <form method="post" action="/repo/{{ repo.id }}/note">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="field">
+          <textarea name="note" placeholder="{{ t('What is worth remembering here?') }}">{{ state.note if state else '' }}</textarea>
+        </div>
+        <button class="btn btn-primary" type="submit">{{ t("Save it") }}</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="stack">
+    <div class="slab">
+      <h2>{{ t("The numbers") }}</h2>
+      <table class="kv">
+        <tr><td>{{ t("Stars") }}</td><td class="fig">{{ repo.stars|compact }}</td></tr>
+        <tr><td>{{ t("Forks") }}</td><td class="fig">{{ repo.forks|compact }}</td></tr>
+        <tr><td>{{ t("Open issues") }}</td><td class="fig">{{ repo.open_issues|compact }}</td></tr>
+        <tr><td>{{ t("Licence") }}</td><td class="fig">{{ repo.license or t('none stated') }}</td></tr>
+        <tr><td>{{ t("Size") }}</td><td class="fig">{{ repo.size_kb|compact }} KB</td></tr>
+        <tr><td>{{ t("Created") }}</td><td>{{ repo.repo_created_at|ago }}</td></tr>
+        <tr><td>{{ t("Last push") }}</td><td>{{ repo.repo_pushed_at|ago }}</td></tr>
+        <tr><td>{{ t("Owner followers") }}</td><td class="fig">{{ repo.owner_followers|compact }}</td></tr>
+        <tr><td>{{ t("Owner repos") }}</td><td class="fig">{{ repo.owner_public_repos|compact }}</td></tr>
+        <tr><td>{{ t("Account opened") }}</td><td>{{ repo.owner_created_at|ago if repo.owner_created_at else t('unknown') }}</td></tr>
+      </table>
+    </div>
+
+    <div class="slab">
+      <h2>{{ t("How we found it") }}</h2>
+      <p class="muted" style="font-size:13px">
+        {% for via in (repo.discovered_via or '').split(',') %}
+        {% if via.strip() %}<span class="fig" style="font-size:12.5px">{{ via.strip() }}</span>
+        {% if not loop.last %}<br>{% endif %}{% endif %}
+        {% endfor %}
+      </p>
+    </div>
+
+    {% if repo.topics %}
+    <div class="slab">
+      <h2>{{ t("Tagged by the author") }}</h2>
+      <p class="muted" style="font-size:13px">
+        {% for t in repo.topics %}<span class="fig" style="font-size:12.5px">{{ t }}</span>{% if not loop.last %}<span class="faint">, </span>{% endif %}{% endfor %}</p>
+    </div>
+    {% endif %}
+
+    {% if events %}
+    <div class="slab">
+      <h2>{{ t("What has changed") }}</h2>
+      <table class="data"><tbody>
+      {% for e in events %}
+      <tr><td class="muted">{{ e.detail }}<br><span class="faint" style="font-size:12px">{{ e.kind }}</span></td>
+        <td class="faint nowrap" style="text-align:right">{{ e.created_at|ago }}</td></tr>
+      {% endfor %}
+      </tbody></table>
+    </div>
+    {% endif %}
+
+    {% if siblings %}
+    <div class="slab">
+      <h2>{{ t("Also from") }} {{ repo.owner }}</h2>
+      <table class="data"><tbody>
+      {% for s in siblings %}
+      <tr><td class="heavy" style="width:36px">{{ s.score|round|int }}</td>
+        <td><a href="/repo/{{ s.id }}">{{ s.name }}</a></td>
+        <td class="faint fig nowrap" style="text-align:right">{{ s.stars|compact }}</td></tr>
+      {% endfor %}
+      </tbody></table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

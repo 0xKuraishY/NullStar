@@ -1,0 +1,68 @@
+{% set here = request.url.path + ('?' ~ request.url.query if request.url.query else '') %}
+{% set other = 'fr' if lang == 'en' else 'en' %}
+<header class="masthead">
+  <div class="masthead-top">
+    <a class="wordmark" href="/">Nullstar<span class="dot">.</span></a>
+    <span class="push"></span>
+    <div class="standing">
+      {% if user %}<a href="/account" class="me">{{ user.display_name or user.username }}</a>{% endif %}
+
+      <form method="post" action="/theme/{{ 'dark' if theme == 'light' else 'light' }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="back" value="{{ here }}">
+        <button class="icon" type="submit"
+                title="{{ t('Switch to dark') if theme == 'light' else t('Switch to light') }}"
+                aria-label="{{ t('Switch to dark') if theme == 'light' else t('Switch to light') }}">
+          {% if theme == 'light' %}
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"
+                  fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          </svg>
+          {% else %}
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.1" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <g stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+              <path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3"/>
+              <path d="M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6"/>
+            </g>
+          </svg>
+          {% endif %}
+        </button>
+      </form>
+
+      <form method="post" action="/lang/{{ other }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="back" value="{{ here }}">
+        <button class="icon lang" type="submit"
+                title="{{ langs[other] }}" aria-label="{{ langs[other] }}">{{ other|upper }}</button>
+      </form>
+
+      {% if user %}
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="icon" type="submit">{{ t("leave") }}</button>
+      </form>
+      {% else %}
+      <a href="/login" class="btn btn-sm">{{ t("Sign in") }}</a>
+      {% if open_registration %}<a href="/register" class="btn btn-sm btn-primary">{{ t("Join") }}</a>{% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <nav class="sections">
+    <a href="/"          {{ 'aria-current=page' if request.url.path == '/' }}>{{ t("Feed") }}</a>
+    <a href="/gems"      {{ 'aria-current=page' if request.url.path == '/gems' }}>{{ t("Overlooked") }}</a>
+    <a href="/majors"    {{ 'aria-current=page' if request.url.path == '/majors' }}>{{ t("Major publishers") }}</a>
+    <a href="/newcomers" {{ 'aria-current=page' if request.url.path == '/newcomers' }}>{{ t("New accounts") }}</a>
+    {% if user %}
+    <a href="/library" {{ 'aria-current=page' if request.url.path.startswith('/library')
+       or request.url.path.startswith('/collections') }}>{{ t("Library") }}</a>
+    {% endif %}
+    <a href="/bookmarks" {{ 'aria-current=page' if request.url.path == '/bookmarks' }}>{{ t("Saved") }}</a>
+    <a href="/dashboard" {{ 'aria-current=page' if request.url.path == '/dashboard' }}>{{ t("Statistics") }}</a>
+    <a href="/how" {{ 'aria-current=page' if request.url.path == '/how' }}>{{ t("Method") }}</a>
+    {% if user and user.is_admin %}
+    <a href="/admin"     {{ 'aria-current=page' if request.url.path.startswith('/admin') }}>{{ t("Admin") }}</a>
+    {% endif %}
+  </nav>
+</header>

@@ -1,0 +1,50 @@
+{% extends "page.html" %}
+{% block content %}
+<div class="gutter">
+<div class="toolbar">
+  <form method="post" action="/admin/sources/run">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="btn btn-primary" type="submit" {{ 'disabled' if collector_running }}>
+      {{ 'Collection running...' if collector_running else 'Run collection now' }}</button>
+  </form>
+  {% if collector_running %}<span class="muted">Reload the page in a moment to see progress.</span>{% endif %}
+</div>
+
+<div class="stack">
+{% for run in runs %}
+<div class="panel">
+  <div class="panel-head">
+    <span class="badge" style="color:{{ 'var(--accent)' if run.status == 'ok' else ('var(--high)' if run.status in ('partial','running','interrupted') else 'var(--critical)') }}">
+      {{ run.status }}</span>
+    <h2 style="font-weight:550">Run #{{ run.id }} / {{ run.trigger }}</h2>
+    <div class="spacer"></div>
+    <span class="faint mono" style="font-size:11.5px">
+      {{ run.started_at|ago }}{% if run.finished_at %} / took
+      {{ ((run.finished_at - run.started_at).total_seconds())|round|int }}s{% endif %}</span>
+  </div>
+  <div class="panel-body">
+    <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-bottom:12px">
+      <div class="stat" style="padding:10px 12px"><div class="k">Sources</div><div class="v" style="font-size:19px">{{ run.sources_run }}</div></div>
+      <div class="stat" style="padding:10px 12px"><div class="k">Seen</div><div class="v" style="font-size:19px">{{ run.repos_seen }}</div></div>
+      <div class="stat" style="padding:10px 12px"><div class="k">New</div><div class="v" style="font-size:19px;color:var(--accent)">{{ run.repos_new }}</div></div>
+      <div class="stat" style="padding:10px 12px"><div class="k">Updated</div><div class="v" style="font-size:19px">{{ run.repos_updated }}</div></div>
+      <div class="stat" style="padding:10px 12px"><div class="k">API calls</div><div class="v" style="font-size:19px">{{ run.api_calls }}</div></div>
+      <div class="stat" style="padding:10px 12px"><div class="k">Quota left</div><div class="v" style="font-size:19px">{{ run.rate_remaining if run.rate_remaining >= 0 else '-' }}</div></div>
+    </div>
+    {% if run.error %}<div class="alert alert-error" style="margin-bottom:12px">{{ run.error }}</div>{% endif %}
+    {% if run.log %}
+    <details>
+      <summary class="muted" style="cursor:pointer;font-size:12.5px">Run log ({{ run.log|length }} lines)</summary>
+      <div class="readme" style="margin-top:10px;max-height:300px">{% for line in run.log %}{{ line }}
+{% endfor %}</div>
+    </details>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="empty"><div class="big">/ / / N O   R U N S / / /</div><h3>No collection runs yet</h3>
+  <p>Trigger the first one with the button above.</p></div>
+{% endfor %}
+</div>
+</div>
+{% endblock %}

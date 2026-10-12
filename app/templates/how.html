@@ -1,0 +1,147 @@
+{% extends "page.html" %}
+{% block content %}
+
+<div class="leaf-head">
+  <h1>{{ t("How ranking works") }}</h1>
+  <p class="sub">{{ t("Every number on this site comes from the rules below. They are read from the running configuration, not copied here, so this page cannot drift from what the collector actually does.") }}</p>
+</div>
+
+<div class="slab">
+  <h2>{{ t("The question the score answers") }}</h2>
+  <p style="font-size:18px;line-height:1.5;max-width:58ch;margin:0 0 14px">
+    {{ t("If you only had ten minutes today, is this repository worth one of them?") }}</p>
+  <p class="muted" style="max-width:62ch">
+    {{ t("That is a different question from the one star counts answer. Sorting by popularity puts anything published this week at the bottom, which is exactly the part we are looking for. So relevance and age carry most of the weight here and popularity is deliberately capped.") }}</p>
+</div>
+
+<div class="slab">
+  <h2>{{ t("What the score is made of") }}<span class="push"></span>
+    <span class="faint" style="text-transform:none;letter-spacing:0">
+      {{ t("maximum") }} {{ total_weight|round|int }} {{ t("points, minus penalties") }}</span></h2>
+
+  <table class="data">
+    <thead><tr>
+      <th>{{ t("Component") }}</th><th style="width:80px">{{ t("Weight") }}</th>
+      <th>{{ t("What it measures") }}</th>
+    </tr></thead>
+    <tbody>
+    {% for key, short, detail in components %}
+    <tr>
+      <td class="heavy" style="white-space:nowrap">{{ t(key.replace("_", " ")|capitalize) }}</td>
+      <td>
+        <span class="fig" style="font-size:15px;color:{{ 'var(--rose)' if key == 'noise_penalty' else 'var(--ink)' }}">
+          {{ '-' if key == 'noise_penalty' else '' }}{{ weights[key]|round|int }}</span>
+        {% if weights[key] != defaults[key] %}
+        <div class="faint" style="font-size:11px">{{ t("default") }} {{ defaults[key]|round|int }}</div>
+        {% endif %}
+      </td>
+      <td>
+        <div class="muted">{{ t(short) }}</div>
+        <div class="faint" style="font-size:12.5px;margin-top:3px;max-width:60ch">{{ t(detail) }}</div>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="duo">
+  <div>
+    <div class="slab">
+      <h2>{{ t("How a project is read as security work") }}</h2>
+      <p class="muted" style="max-width:60ch">
+        {{ t("There is no model involved. Each domain below carries a vocabulary of topics and phrases. A match on a topic the author set counts most, a match in the name or description counts next, a match in the readme counts least. The weight column is how strongly a hit in that domain argues the repository really is security work.") }}</p>
+      <table class="data" style="margin-top:14px">
+        <thead><tr><th>{{ t("Domain") }}</th><th style="width:70px">{{ t("Weight") }}</th>
+          <th style="width:90px">{{ t("Terms") }}</th></tr></thead>
+        <tbody>
+        {% for slug, meta in categories.items() %}
+        <tr>
+          <td><a href="/?category={{ slug }}">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;
+                  background:{{ meta.accent }};margin-right:8px"></span>{{ t(meta.label) }}</a></td>
+          <td class="fig">{{ '%.2f'|format(meta.weight) }}</td>
+          <td class="faint fig">{{ meta.topics|length + meta.keywords|length }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="slab">
+      <h2>{{ t("What gets marked down") }}</h2>
+      <p class="muted" style="max-width:60ch">{{ t("A penalty is subtracted from the total. These are the patterns that trigger one:") }}</p>
+      <ul class="muted" style="max-width:60ch">
+        <li>{{ t("Reading lists and collections of links rather than a project") }}
+          <span class="faint fig" style="font-size:12px">({{ noise|join(", ") }})</span></li>
+        <li>{{ t("Course material, exercises and write-ups") }}
+          <span class="faint fig" style="font-size:12px">({{ low_effort|join(", ") }})</span></li>
+        <li>{{ t("Forks of somebody else's repository") }}</li>
+        <li>{{ t("Archived repositories") }}</li>
+        <li>{{ t("No description, no topics and no readme") }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="slab">
+      <h2>{{ t("Who published it") }}</h2>
+      <p class="muted" style="font-size:13px">{{ t("The multiplier applied to the origin component.") }}</p>
+      <table class="kv">
+        {% for tier, factor in tier_weight.items() %}
+        <tr><td>{{ t(tier_labels.get(tier, tier)) }}</td>
+          <td class="fig">{{ '%.2f'|format(factor) }}</td></tr>
+        {% endfor %}
+      </table>
+      <p class="faint" style="font-size:12.5px;margin-top:10px">
+        {{ t("An account nobody has classified still rises with its follower count, so a researcher we have not listed is not punished for it.") }}</p>
+    </div>
+
+    <div class="slab">
+      <h2>{{ t("Where the data comes from") }}</h2>
+      <table class="kv">
+        {% for kind, n in sources.items() %}
+        <tr><td>{{ t(kind) }}</td><td class="fig">{{ n }}</td></tr>
+        {% endfor %}
+        <tr><td>{{ t("Maximum repository age") }}</td>
+          <td class="fig">{{ collector.max_repo_age_days }} {{ t("days") }}</td></tr>
+        <tr><td>{{ t("Minimum score to store") }}</td>
+          <td class="fig">{{ collector.min_score_to_keep }}</td></tr>
+        <tr><td>{{ t("Search lookback") }}</td>
+          <td class="fig">{{ collector.lookback_days }} {{ t("days") }}</td></tr>
+      </table>
+      <p class="faint" style="font-size:12.5px;margin-top:10px">
+        {{ t("A repository created longer ago than the maximum is skipped even if it was pushed to this morning. The point is work that did not exist last month, not long-running projects that received a commit.") }}</p>
+    </div>
+
+    <div class="slab">
+      <h2>{{ t("Sorting") }}</h2>
+      <table class="kv">
+        {% for key, meta in sorts.items() %}
+        <tr><td>{{ t(meta[0]) }}</td><td class="faint fig">{{ key }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="slab">
+      <h2>{{ t("What this site does not do") }}</h2>
+      <ul class="muted" style="font-size:13px">
+        <li>{{ t("No analytics, no third-party script, no content delivery network.") }}</li>
+        <li>{{ t("Repository names, descriptions and readme text are shown as their authors wrote them.") }}</li>
+        <li>{{ t("No ranking is bought, and nobody can pay to appear.") }}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="slab">
+  <h2>{{ t("Check it yourself") }}</h2>
+  <p class="muted" style="max-width:62ch">
+    {{ t("Every repository page shows its own arithmetic: each component, the points it contributed, and the exact terms that matched. If a rank looks wrong, that page will tell you why it happened.") }}</p>
+  <div class="row-h" style="margin-top:12px">
+    <a class="btn" href="/?sort=score">{{ t("See the ranking") }}</a>
+    <a class="btn btn-ghost" href="/api/v1/taxonomy">{{ t("The same rules as JSON") }}</a>
+  </div>
+</div>
+
+{% endblock %}

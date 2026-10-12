@@ -1,0 +1,76 @@
+{% extends "page.html" %}
+{% block content %}
+<div class="gutter">
+<div class="grid" style="grid-template-columns:minmax(0,520px) 340px">
+  <form method="post" action="/admin/settings" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="panel">
+      <div class="panel-head"><h2>GitHub access</h2></div>
+      <div class="panel-body">
+        <p class="muted" style="margin-top:0;font-size:12.5px">
+          Status:
+          {% if token_override_set %}<span class="badge" style="color:var(--accent)">token set in app</span>
+          {% elif env_token_set %}<span class="badge" style="color:var(--accent)">token from environment</span>
+          {% else %}<span class="badge" style="color:var(--critical)">no token: 60 req/h</span>{% endif %}
+        </p>
+        <div class="field">
+          <label for="github_token">Personal access token</label>
+          <input id="github_token" name="github_token" type="password" autocomplete="off"
+                 placeholder="{{ 'stored: leave blank to keep' if token_override_set else 'ghp_... or github_pat_...' }}">
+          <span class="hint">Read-only scope is enough (public_repo / no scopes for public data).
+            A token stored here overrides <code class="mono">GITHUB_TOKEN</code> and is used on the next run.</span>
+        </div>
+        {% if token_override_set %}
+        <label class="row-h" style="gap:8px;cursor:pointer;margin-bottom:12px">
+          <input type="checkbox" name="clear_token" value="1" style="width:auto">
+          <span style="font-size:13px">Remove the stored token and fall back to the environment</span>
+        </label>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Alerts</h2></div>
+      <div class="panel-body">
+        <label class="row-h" style="gap:8px;cursor:pointer;margin-bottom:14px">
+          <input type="checkbox" name="alerts_enabled" value="1" {{ 'checked' if alerts.enabled }} style="width:auto">
+          <span style="font-size:13px">Push a webhook when a high-scoring repository is discovered</span>
+        </label>
+        <div class="field">
+          <label for="webhook_url">Webhook URL</label>
+          <input id="webhook_url" name="webhook_url" value="{{ alerts.webhook_url }}"
+                 placeholder="https://hooks.slack.com/services/...">
+          <span class="hint">Posts JSON with <code class="mono">text</code>, <code class="mono">content</code>,
+            <code class="mono">repo</code>, <code class="mono">score</code> and <code class="mono">url</code>: compatible with Slack and Discord out of the box.</span>
+        </div>
+        <div class="field">
+          <label for="min_score">Minimum score to alert</label>
+          <input id="min_score" name="min_score" type="number" min="0" max="100" value="{{ alerts.min_score }}">
+        </div>
+        <button class="btn btn-primary" type="submit">Save settings</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="panel" style="align-self:start">
+    <div class="panel-head"><h2>Environment</h2></div>
+    <div class="panel-body muted" style="font-size:12.5px">
+      <p style="margin-top:0">These are set in <code class="mono">.env</code> and need a container
+        restart to change:</p>
+      <table class="data" style="font-size:12px">
+        <tr><td class="faint mono">SCHEDULER_ENABLED</td><td class="mono">{{ settings.scheduler_enabled }}</td></tr>
+        <tr><td class="faint mono">COLLECT_INTERVAL_MINUTES</td><td class="mono">{{ settings.collect_interval_minutes }}</td></tr>
+        <tr><td class="faint mono">MAX_API_CALLS_PER_RUN</td><td class="mono">{{ settings.max_api_calls_per_run }}</td></tr>
+        <tr><td class="faint mono">SESSION_TTL_HOURS</td><td class="mono">{{ settings.session_ttl_hours }}</td></tr>
+        <tr><td class="faint mono">COOKIE_SECURE</td><td class="mono">{{ settings.cookie_secure }}</td></tr>
+        <tr><td class="faint mono">LOGIN_MAX_ATTEMPTS</td><td class="mono">{{ settings.login_max_attempts }}</td></tr>
+      </table>
+      <p class="faint" style="margin-bottom:0">Serving over plain HTTP keeps
+        <code class="mono">COOKIE_SECURE=false</code>. Put a TLS reverse proxy in front and set it to
+        <code class="mono">true</code>.</p>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

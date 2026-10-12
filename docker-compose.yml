@@ -1,0 +1,37 @@
+name: nullstar
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nullstar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nullstar}
+      POSTGRES_DB: ${POSTGRES_DB:-nullstar}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nullstar} -d ${POSTGRES_DB:-nullstar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-nullstar}:${POSTGRES_PASSWORD:-nullstar}@db:5432/${POSTGRES_DB:-nullstar}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${HTTP_PORT:-8080}:8000"
+    networks: [internal]
+
+volumes:
+  pgdata:
+
+networks:
+  internal:

@@ -1,0 +1,28 @@
+{% extends "auth_base.html" %}
+{% block content %}
+<h1>{{ t("Come back in") }}</h1>
+<p class="sub">{{ t("Sign in to find your saved projects, collections and notes.") }}</p>
+
+<form method="post" action="/login">
+  <input type="hidden" name="next" value="{{ next_url or '/' }}">
+  <div class="field">
+    <label for="username">{{ t("Name") }}</label>
+    <input id="username" name="username" autocomplete="username" autofocus required
+           value="{{ form.username if form else '' }}">
+  </div>
+  <div class="field">
+    <label for="password">{{ t("Password") }}</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+  </div>
+  <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center">
+    {{ t("Sign in") }}</button>
+</form>
+
+<p class="faint" style="margin-top:24px;font-size:13px">
+  {% if open_registration %}
+    {{ t("No account?") }} <a href="/register" style="color:var(--mint)">{{ t("Make one") }}</a>.
+  {% else %}
+    {{ t("This instance is closed. Ask whoever runs it for an invitation.") }}
+  {% endif %}
+</p>
+{% endblock %}

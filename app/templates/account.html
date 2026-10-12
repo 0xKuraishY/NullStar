@@ -1,0 +1,126 @@
+{% extends "page.html" %}
+{% block content %}
+<div class="gutter">
+
+{% if new_key %}
+<div class="alert alert-ok" style="flex-direction:column;align-items:stretch">
+  <strong>New API key created: copy it now, it is never shown again.</strong>
+  <div class="secret" style="margin-top:8px">{{ new_key }}</div>
+  <div class="row-h" style="margin-top:8px">
+    <button class="btn btn-sm" data-copy="{{ new_key }}">copy key</button>
+    <span class="faint" style="font-size:12px">Use it as <code class="mono">Authorization: Bearer &lt;key&gt;</code>
+      or <code class="mono">?key=</code> on the Atom feed.</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="grid" style="grid-template-columns:minmax(0,1fr) 340px">
+  <div class="stack">
+    <div class="panel">
+      <div class="panel-head"><h2>Active sessions</h2></div>
+      <div class="panel-body" style="padding:0">
+        <table class="data">
+          <thead><tr><th>Address</th><th>Client</th><th>Started</th><th>Last seen</th><th></th></tr></thead>
+          <tbody>
+          {% for s in sessions %}
+          <tr>
+            <td class="mono">{{ s.ip or '-' }}{% if s.ip == current_ip %}
+              <span class="badge" style="color:var(--accent);margin-left:6px">this device</span>{% endif %}</td>
+            <td class="faint" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              {{ s.user_agent or '-' }}</td>
+            <td class="faint">{{ s.created_at|ago }}</td>
+            <td class="faint">{{ s.last_seen_at|ago }}</td>
+            <td class="actions">
+              <form method="post" action="/account/sessions/{{ s.id }}/revoke">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button class="btn btn-sm btn-danger" type="submit">Revoke</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>API keys</h2></div>
+      <div class="panel-body" style="padding:0">
+        <table class="data">
+          <thead><tr><th>Name</th><th>Prefix</th><th>Created</th><th>Last used</th><th></th></tr></thead>
+          <tbody>
+          {% for k in api_keys %}
+          <tr>
+            <td>{{ k.name }}</td>
+            <td class="mono faint">{{ k.prefix }}...</td>
+            <td class="faint">{{ k.created_at|ago }}</td>
+            <td class="faint">{{ k.last_used_at|ago if k.last_used_at else 'never' }}</td>
+            <td class="actions">
+              <form method="post" action="/account/keys/{{ k.id }}/revoke" data-confirm="Revoke this API key?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button class="btn btn-sm btn-danger" type="submit">Revoke</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="faint" style="text-align:center;padding:22px">No API keys yet.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="panel-body" style="border-top:1px solid var(--border)">
+        <form method="post" action="/account/keys" class="row-h">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input name="name" placeholder="Key name (e.g. rss-reader)" required
+                 style="flex:1;background:var(--bg-input);border:1px solid var(--border);
+                        color:var(--text);padding:7px 11px;border-radius:6px;font-size:13px">
+          <button class="btn btn-primary" type="submit">Create key</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="panel">
+      <div class="panel-head"><h2>Profile</h2></div>
+      <div class="panel-body">
+        <table class="data" style="font-size:13px">
+          <tr><td class="faint">Username</td><td class="mono">{{ user.username }}</td></tr>
+          <tr><td class="faint">Role</td><td><span class="badge">{{ user.role }}</span></td></tr>
+          <tr><td class="faint">Member since</td><td>{{ user.created_at|ago }}</td></tr>
+          <tr><td class="faint">Last sign-in</td><td>{{ user.last_login_at|ago if user.last_login_at else '-' }}</td></tr>
+        </table>
+        <a class="btn" href="/account/password" style="margin-top:12px;width:100%;justify-content:center">
+          Change password</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Feeds &amp; export</h2></div>
+      <div class="panel-body" style="font-size:12.5px">
+        <p class="muted" style="margin-top:0">Any filter from the radar works as a query string here.</p>
+        <div class="secret" style="color:var(--text-dim);border-style:solid">
+GET /api/v1/repos?min_score=70&amp;window=7d
+GET /feed.atom?signal=hidden-gem&amp;key=...
+GET /export.json?category=exploit-dev</div>
+        <p class="faint" style="margin-bottom:0">Authenticate with
+          <code class="mono">Authorization: Bearer &lt;key&gt;</code> or the
+          <code class="mono">X-API-Key</code> header. Interactive docs:
+          <a href="/api/docs" style="color:var(--accent)">/api/docs</a>.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Shortcuts</h2></div>
+      <div class="panel-body" style="font-size:12.5px">
+        <div class="row-h" style="justify-content:space-between"><span class="muted">Focus search</span><kbd>/</kbd></div>
+        <div class="row-h" style="justify-content:space-between"><span class="muted">Go to radar</span><span><kbd>g</kbd> <kbd>f</kbd></span></div>
+        <div class="row-h" style="justify-content:space-between"><span class="muted">Hidden gems</span><span><kbd>g</kbd> <kbd>h</kbd></span></div>
+        <div class="row-h" style="justify-content:space-between"><span class="muted">Dashboard</span><span><kbd>g</kbd> <kbd>d</kbd></span></div>
+        <div class="row-h" style="justify-content:space-between"><span class="muted">Bookmarks</span><span><kbd>g</kbd> <kbd>b</kbd></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}
