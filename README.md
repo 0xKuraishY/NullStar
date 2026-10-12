@@ -1,6 +1,24 @@
-# Nullstar
+<p align="center">
+  <img src="app/static/favicon.svg" alt="Nullstar" width="120" height="120">
+</p>
 
-Self-hosted watch tool for new security code on GitHub.
+<h1 align="center">Nullstar</h1>
+
+<p align="center"><em>Self-hosted watch tool for new security code on GitHub.</em></p>
+
+<p align="center">
+  <a href="https://github.com/0xKuraishY/NullStar/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/0xKuraishY/NullStar?style=flat-square&color=35e3b4&labelColor=0b0e13"></a>
+  <a href="https://github.com/0xKuraishY/NullStar/network/members"><img alt="Forks" src="https://img.shields.io/github/forks/0xKuraishY/NullStar?style=flat-square&color=35e3b4&labelColor=0b0e13"></a>
+  <a href="https://github.com/0xKuraishY/NullStar/issues"><img alt="Issues" src="https://img.shields.io/github/issues/0xKuraishY/NullStar?style=flat-square&color=35e3b4&labelColor=0b0e13"></a>
+  <a href="https://github.com/0xKuraishY/NullStar/commits"><img alt="Last commit" src="https://img.shields.io/github/last-commit/0xKuraishY/NullStar?style=flat-square&color=35e3b4&labelColor=0b0e13"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/0xKuraishY/NullStar?style=flat-square&color=35e3b4&labelColor=0b0e13"></a>
+  <br>
+  <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-35e3b4?style=flat-square&logo=python&logoColor=e9e7e2&labelColor=0b0e13">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.115-35e3b4?style=flat-square&logo=fastapi&logoColor=e9e7e2&labelColor=0b0e13">
+  <img alt="PostgreSQL or SQLite" src="https://img.shields.io/badge/db-PostgreSQL%20%7C%20SQLite-35e3b4?style=flat-square&logo=postgresql&logoColor=e9e7e2&labelColor=0b0e13">
+  <img alt="Docker" src="https://img.shields.io/badge/docker-compose-35e3b4?style=flat-square&logo=docker&logoColor=e9e7e2&labelColor=0b0e13">
+  <img alt="Self-hosted" src="https://img.shields.io/badge/self--hosted-no%20CDN-35e3b4?style=flat-square&labelColor=0b0e13">
+</p>
 
 GitHub ranks by popularity, which means anything published today sits at the
 bottom of every list. Nullstar ranks by what a project is and how new it is
@@ -14,6 +32,24 @@ Status: works, runs in production for me, API and schema still move between
 releases. Issues and pull requests welcome.
 
 **[Francais plus bas](#nullstar-francais)**
+
+<p align="center">
+  <img src="docs/screenshots/en/feed.png" alt="The feed" width="100%">
+</p>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/en/landing.png" alt="Landing and sign-in page"><br><sub>Landing page: sign in, sign up, or guest mode</sub></td>
+    <td width="50%"><img src="docs/screenshots/en/repo.png" alt="Repository page"><br><sub>Repository page with the sanitised readme and the numbers</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/en/dashboard.png" alt="Statistics"><br><sub>Statistics: who publishes, which domain, which language</sub></td>
+    <td width="50%"><img src="docs/screenshots/en/how.png" alt="Method page"><br><sub><code>/how</code>, the scoring method generated from the live configuration</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/screenshots/en/feed-dark.png" alt="The feed in dark mode"><br><sub>Dark mode</sub></td>
+  </tr>
+</table>
 
 
 ## Running it
@@ -292,9 +328,27 @@ MIT, see LICENSE.
 
 <a name="nullstar-francais"></a>
 
-# Nullstar (francais)
+<p align="center">
+  <img src="app/static/favicon.svg" alt="Nullstar" width="120" height="120">
+</p>
 
-Outil de veille auto-heberge pour le nouveau code de securite publie sur GitHub.
+<h1 align="center">Nullstar (francais)</h1>
+
+<p align="center"><em>Outil de veille auto-heberge pour le nouveau code de securite publie sur GitHub.</em></p>
+
+<p align="center">
+  <a href="https://github.com/0xKuraishY/NullStar/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/0xKuraishY/NullStar?style=flat-square&color=35e3b4&labelColor=0b0e13"></a>
+  <a href="https://github.com/0xKuraishY/NullStar/network/members"><img alt="Forks" src="https://img.shields.io/github/forks/0xKuraishY/NullStar?style=flat-square&color=35e3b4&labelColor=0b0e13"></a>
+  <a href="https://github.com/0xKuraishY/NullStar/issues"><img alt="Issues" src="https://img.shields.io/github/issues/0xKuraishY/NullStar?style=flat-square&color=35e3b4&labelColor=0b0e13"></a>
+  <a href="https://github.com/0xKuraishY/NullStar/commits"><img alt="Last commit" src="https://img.shields.io/github/last-commit/0xKuraishY/NullStar?style=flat-square&color=35e3b4&labelColor=0b0e13"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/0xKuraishY/NullStar?style=flat-square&color=35e3b4&labelColor=0b0e13"></a>
+  <br>
+  <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-35e3b4?style=flat-square&logo=python&logoColor=e9e7e2&labelColor=0b0e13">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.115-35e3b4?style=flat-square&logo=fastapi&logoColor=e9e7e2&labelColor=0b0e13">
+  <img alt="PostgreSQL or SQLite" src="https://img.shields.io/badge/db-PostgreSQL%20%7C%20SQLite-35e3b4?style=flat-square&logo=postgresql&logoColor=e9e7e2&labelColor=0b0e13">
+  <img alt="Docker" src="https://img.shields.io/badge/docker-compose-35e3b4?style=flat-square&logo=docker&logoColor=e9e7e2&labelColor=0b0e13">
+  <img alt="Self-hosted" src="https://img.shields.io/badge/self--hosted-no%20CDN-35e3b4?style=flat-square&labelColor=0b0e13">
+</p>
 
 GitHub classe par popularite, ce qui place tout ce qui sort aujourd'hui en bas
 de chaque liste. Nullstar classe selon la nature du projet et sa nouveaute : une
@@ -307,6 +361,24 @@ cote, les classer en collections et prendre des notes.
 Etat du projet : fonctionne, tourne en production chez moi, l'API et le schema
 bougent encore d'une version a l'autre. Les tickets et les contributions sont
 bienvenus.
+
+<p align="center">
+  <img src="docs/screenshots/fr/feed.png" alt="Le flux" width="100%">
+</p>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/fr/landing.png" alt="Page d'accueil et connexion"><br><sub>Page d'accueil : connexion, inscription ou mode invite</sub></td>
+    <td width="50%"><img src="docs/screenshots/fr/repo.png" alt="Fiche de depot"><br><sub>Fiche de depot avec le readme assaini et les chiffres</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/fr/dashboard.png" alt="Statistiques"><br><sub>Statistiques : qui publie, quel domaine, quel langage</sub></td>
+    <td width="50%"><img src="docs/screenshots/fr/how.png" alt="Page de methode"><br><sub><code>/how</code>, la methode de calcul generee depuis la configuration en cours</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/screenshots/fr/feed-dark.png" alt="Le flux en mode sombre"><br><sub>Mode sombre</sub></td>
+  </tr>
+</table>
 
 
 ## Installation
