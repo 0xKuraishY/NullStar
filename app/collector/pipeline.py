@@ -139,6 +139,11 @@ def tier_owner(client: GitHubClient, login: str, owner_type: str, cache: dict,
 # persistence
 def upsert_repo(db: Session, payload: dict, discovered_via: str) -> tuple[Repository, bool]:
     row = db.scalar(select(Repository).where(Repository.github_id == payload["github_id"]))
+    if row is None:
+        # same name, new id: the repo was deleted and recreated, keep the row
+        row = db.scalar(select(Repository).where(Repository.full_name == payload["full_name"]))
+        if row is not None:
+            row.github_id = payload["github_id"]
     created = False
     if row is None:
         row = Repository(github_id=payload["github_id"], discovered_via=discovered_via[:160])
@@ -380,6 +385,7 @@ def run_collection(trigger: str = "schedule", source_ids: list[int] | None = Non
 
     except Exception as exc:  # noqa: BLE001
         log.exception("collection run failed")
+        db.rollback()
         run.status = "error"
         run.error = f"{type(exc).__name__}: {exc}"[:2000]
         logbook.append(f"FATAL: {exc}")
